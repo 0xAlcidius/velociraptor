@@ -38,5 +38,5 @@ func (self ConcatFunction) Call(ctx context.Context,
 }
 
 func init() {
-	vql_subsystem.RegisterFunction(&_ItemsFunc{})
+	vql_subsystem.RegisterFunction(&ConcatFunction{})
 }
