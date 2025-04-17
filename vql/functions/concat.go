@@ -5,23 +5,27 @@ import (
 	"fmt"
 
 	"github.com/Velocidex/ordereddict"
+	"www.velocidex.com/golang/velociraptor/acls"
+	"www.velocidex.com/golang/velociraptor/vql"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
 	"www.velocidex.com/golang/vfilter"
+	"www.velocidex.com/golang/vfilter/arg_parser"
 )
 
-// type ConcatFunctionArgs struct {
-// 	AlertName string    `vfilter:"required,field=name,doc=Name of the alert."`
-// 	DedupTime int64     `vfilter:"optional,field=dedup,doc=Suppress same message in this many seconds (default 7200 sec or 2 hours)."`
-// 	Condition types.Any `vfilter:"options,field=condition,doc=If specified we ignore the alert unless the condition is true"`
-// }
+type ConcatFunctionArgs struct {
+	string1 string `vfilter:"required,field=string1"`
+	string2 string `vfilter:"required,field=string2"`
+}
 
 type ConcatFunction struct{}
 
 func (self ConcatFunction) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfilter.FunctionInfo {
 	return &vfilter.FunctionInfo{
-		Name:    "concat",
-		Doc:     "concatonates N strings together.",
-		Version: 1,
+		Name:     "concat",
+		Doc:      "concatonates N strings together.",
+		ArgType:  type_map.AddType(scope, &ConcatFunction{}),
+		Metadata: vql.VQLMetadata().Permissions(acls.PREPARE_RESULTS).Build(),
+		Version:  1,
 	}
 }
 
@@ -29,10 +33,26 @@ func (self ConcatFunction) Call(ctx context.Context,
 	scope vfilter.Scope,
 	args *ordereddict.Dict) vfilter.Any {
 
-	fmt.Println("I'M RUNNING CONCATE")
+	defer vql_subsystem.RegisterMonitor("concat", args)()
 
-	fmt.Println("args", args)
-	fmt.Println("scope", scope)
+	arg := &ConcatFunctionArgs{}
+	err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
+	if err != nil {
+		scope.Log("concat: %s", err.Error())
+		return &vfilter.Null{}
+	}
+
+	a, ok := args.Get("string1")
+	if !ok {
+		scope.Log("concat: string1 not found")
+	}
+
+	fmt.Println("[CONCAT]: A WAS: ", a)
+	b, ok := args.Get("string2")
+	if !ok {
+		scope.Log("concat: string2 not found")
+	}
+	fmt.Println("[CONCAT]: B WAS: ", b)
 
 	return &vfilter.Null{}
 }
