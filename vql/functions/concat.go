@@ -2,6 +2,7 @@ package functions
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Velocidex/ordereddict"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
@@ -27,6 +28,8 @@ func (self ConcatFunction) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) 
 func (self ConcatFunction) Call(ctx context.Context,
 	scope vfilter.Scope,
 	args *ordereddict.Dict) vfilter.Any {
+
+	fmt.Println("I'M RUNNING CONCATE")
 
 	new := vfilter.NewScope()
 	for _, k := range args.Keys() {
