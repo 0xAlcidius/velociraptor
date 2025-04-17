@@ -33,7 +33,9 @@ func (self ConcatFunction) Call(ctx context.Context,
 
 	new := vfilter.NewScope()
 	for _, k := range args.Keys() {
+		fmt.Println("[CONCAT]: KEY: ", k)
 		v, _ := args.Get(k)
+		fmt.Println("[CONCAT]: VALUE: ", v)
 		new.Add(new, v)
 	}
 
