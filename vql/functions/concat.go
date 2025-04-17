@@ -31,15 +31,10 @@ func (self ConcatFunction) Call(ctx context.Context,
 
 	fmt.Println("I'M RUNNING CONCATE")
 
-	new := vfilter.NewScope()
-	for _, k := range args.Keys() {
-		fmt.Println("[CONCAT]: KEY: ", k)
-		v, _ := args.Get(k)
-		fmt.Println("[CONCAT]: VALUE: ", v)
-		new.Add(new, v)
-	}
+	fmt.Println("args", args)
+	fmt.Println("scope", scope)
 
-	return new
+	return &vfilter.Null{}
 }
 
 func init() {
