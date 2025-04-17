@@ -33,16 +33,10 @@ func (self ConcatFunction) Call(ctx context.Context,
 	scope vfilter.Scope,
 	args *ordereddict.Dict) vfilter.Any {
 
-	fmt.Println("[CONCAT] RUNNING")
-
 	defer vql_subsystem.RegisterMonitor("concat", args)()
 
-	fmt.Println("[CONCAT] STILL RUNNING0")
-
 	arg := &ConcatFunctionArgs{}
-	fmt.Println("[CONCAT] STILL RUNNING1")
 	err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
-	fmt.Println("[CONCAT] STILL RUNNING2")
 	if err != nil {
 		fmt.Println("[CONCAT]: ERROR:", err.Error())
 		scope.Log("[CONCAT]: %s", err.Error())
@@ -52,7 +46,9 @@ func (self ConcatFunction) Call(ctx context.Context,
 	fmt.Println("[CONCAT] STRING1: ", arg.String1)
 	fmt.Println("[CONCAT] STRING2: ", arg.String2)
 
-	return &vfilter.Null{}
+	newString := arg.String1 + arg.String2
+
+	return newString
 }
 
 func init() {
