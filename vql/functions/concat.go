@@ -13,8 +13,8 @@ import (
 )
 
 type ConcatFunctionArgs struct {
-	string1 string `vfilter:"required,field=string1"`
-	string2 string `vfilter:"required,field=string2"`
+	String1 string `vfilter:"required,field=string1"`
+	String2 string `vfilter:"required,field=string2"`
 }
 
 type ConcatFunction struct{}
@@ -50,7 +50,7 @@ func (self ConcatFunction) Call(ctx context.Context,
 	}
 
 	fmt.Println("[CONCAT] STILL RUNNING3")
-	a, ok := args.Get("string1")
+	a, ok := args.Get("String1")
 	fmt.Println("[CONCAT] STILL RUNNING4")
 	if !ok {
 		fmt.Println("[CONCAT]: string1 not found")
@@ -58,7 +58,7 @@ func (self ConcatFunction) Call(ctx context.Context,
 	}
 
 	fmt.Println("[CONCAT]: A WAS: ", a)
-	b, ok := args.Get("string2")
+	b, ok := args.Get("String2")
 	if !ok {
 		fmt.Println("[CONCAT]: string2 not found")
 		scope.Log("[CONCAT]: string2 not found")
