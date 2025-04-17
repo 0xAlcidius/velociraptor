@@ -49,21 +49,8 @@ func (self ConcatFunction) Call(ctx context.Context,
 		return &vfilter.Null{}
 	}
 
-	fmt.Println("[CONCAT] STILL RUNNING3")
-	a, ok := args.Get("String1")
-	fmt.Println("[CONCAT] STILL RUNNING4")
-	if !ok {
-		fmt.Println("[CONCAT]: string1 not found")
-		scope.Log("[CONCAT]: string1 not found")
-	}
-
-	fmt.Println("[CONCAT]: A WAS: ", a)
-	b, ok := args.Get("String2")
-	if !ok {
-		fmt.Println("[CONCAT]: string2 not found")
-		scope.Log("[CONCAT]: string2 not found")
-	}
-	fmt.Println("[CONCAT]: B WAS: ", b)
+	fmt.Println("[CONCAT] STRING1: ", arg.String1)
+	fmt.Println("[CONCAT] STRING2: ", arg.String2)
 
 	return &vfilter.Null{}
 }
