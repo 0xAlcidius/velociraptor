@@ -44,6 +44,7 @@ func (self ConcatFunction) Call(ctx context.Context,
 	err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 	fmt.Println("[CONCAT] STILL RUNNING2")
 	if err != nil {
+		fmt.Println("[CONCAT]: ERROR:", err.Error())
 		scope.Log("[CONCAT]: %s", err.Error())
 		return &vfilter.Null{}
 	}
