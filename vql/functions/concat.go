@@ -37,23 +37,29 @@ func (self ConcatFunction) Call(ctx context.Context,
 
 	defer vql_subsystem.RegisterMonitor("concat", args)()
 
-	fmt.Println("[CONCAT] STILL RUNNING")
+	fmt.Println("[CONCAT] STILL RUNNING0")
 
 	arg := &ConcatFunctionArgs{}
+	fmt.Println("[CONCAT] STILL RUNNING1")
 	err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
+	fmt.Println("[CONCAT] STILL RUNNING2")
 	if err != nil {
 		scope.Log("[CONCAT]: %s", err.Error())
 		return &vfilter.Null{}
 	}
 
+	fmt.Println("[CONCAT] STILL RUNNING3")
 	a, ok := args.Get("string1")
+	fmt.Println("[CONCAT] STILL RUNNING4")
 	if !ok {
+		fmt.Println("[CONCAT]: string1 not found")
 		scope.Log("[CONCAT]: string1 not found")
 	}
 
 	fmt.Println("[CONCAT]: A WAS: ", a)
 	b, ok := args.Get("string2")
 	if !ok {
+		fmt.Println("[CONCAT]: string2 not found")
 		scope.Log("[CONCAT]: string2 not found")
 	}
 	fmt.Println("[CONCAT]: B WAS: ", b)
