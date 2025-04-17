@@ -86,6 +86,7 @@ var (
 		"collect_client",
 		"commandline_split",
 		"compress",
+		"concat",
 		"count",
 		"create_flow_download",
 		"create_hunt_download",

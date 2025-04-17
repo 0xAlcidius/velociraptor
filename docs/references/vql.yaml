@@ -11472,6 +11472,18 @@
   - linux_amd64_cgo
   - windows_386_cgo
   - windows_amd64_cgo
+- name: concat
+  description : Concatenate a list of strings.
+  type: Function
+  args:
+  - name: string1
+    type: string
+    description: A string that will serve as the prefix
+    required: true
+  - name: string2
+    type: string
+    description: A string that will serve as the suffix
+    required: true
 - name: yara
   description: Scan files using yara rules.
   type: Plugin
