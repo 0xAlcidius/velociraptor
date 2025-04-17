@@ -33,24 +33,26 @@ func (self ConcatFunction) Call(ctx context.Context,
 	scope vfilter.Scope,
 	args *ordereddict.Dict) vfilter.Any {
 
+	fmt.Println("[CONCAT] RUNNING")
+
 	defer vql_subsystem.RegisterMonitor("concat", args)()
 
 	arg := &ConcatFunctionArgs{}
 	err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 	if err != nil {
-		scope.Log("concat: %s", err.Error())
+		scope.Log("[CONCAT]: %s", err.Error())
 		return &vfilter.Null{}
 	}
 
 	a, ok := args.Get("string1")
 	if !ok {
-		scope.Log("concat: string1 not found")
+		scope.Log("[CONCAT]: string1 not found")
 	}
 
 	fmt.Println("[CONCAT]: A WAS: ", a)
 	b, ok := args.Get("string2")
 	if !ok {
-		scope.Log("concat: string2 not found")
+		scope.Log("[CONCAT]: string2 not found")
 	}
 	fmt.Println("[CONCAT]: B WAS: ", b)
 
