@@ -37,6 +37,8 @@ func (self ConcatFunction) Call(ctx context.Context,
 
 	defer vql_subsystem.RegisterMonitor("concat", args)()
 
+	fmt.Println("[CONCAT] STILL RUNNING")
+
 	arg := &ConcatFunctionArgs{}
 	err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 	if err != nil {
