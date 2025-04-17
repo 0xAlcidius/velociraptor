@@ -16,7 +16,7 @@ import (
 
 type ConcatFunction struct{}
 
-func (self _ItemsFunc) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfilter.FunctionInfo {
+func (self ConcatFunction) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfilter.FunctionInfo {
 	return &vfilter.FunctionInfo{
 		Name:    "concat",
 		Doc:     "concatonates N strings together.",
@@ -24,7 +24,7 @@ func (self _ItemsFunc) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfi
 	}
 }
 
-func (self *ConcatFunction) Call(ctx context.Context,
+func (self ConcatFunction) Call(ctx context.Context,
 	scope vfilter.Scope,
 	args *ordereddict.Dict) vfilter.Any {
 
