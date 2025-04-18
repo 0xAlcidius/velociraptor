@@ -50,7 +50,13 @@ func (self ConcatPlugin) Call(ctx context.Context,
 		fmt.Println("[CONCAT] STRING2: ", arg.String2)
 
 		newString := arg.String1 + arg.String2
-		output_chan <- newString
+		select {
+		case <-ctx.Done():
+			return
+
+		case output_chan <- newString:
+
+		}
 		fmt.Println("[CONCAT] NEW STRING: ", newString)
 		fmt.Println("[CONCAT] OUTPUT: ", output_chan)
 		fmt.Println("[CONCAT] OUTPUT: ", <-output_chan)
