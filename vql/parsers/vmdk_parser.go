@@ -1,0 +1,218 @@
+package parsers
+
+import (
+	"context"
+	"encoding/binary"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
+	"github.com/Velocidex/go-vmdk/parser"
+	"github.com/Velocidex/ordereddict"
+	"www.velocidex.com/golang/velociraptor/acls"
+	"www.velocidex.com/golang/velociraptor/vql"
+	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
+	vfilter "www.velocidex.com/golang/vfilter"
+	"www.velocidex.com/golang/vfilter/arg_parser"
+)
+
+const (
+	SectorSize        = 512
+	UTF16LECharacters = 72
+	SignaturePosition = 8
+	PartitionGUID     = 16
+	DiskGUIDSize      = 16
+)
+
+// LBA 1
+type GPTHeader struct {
+	Signature                [SignaturePosition]byte
+	Revision                 uint32
+	HeaderSize               uint32
+	HeaderCRC32              uint32
+	Reserved                 uint32
+	CurrentLBA               uint64
+	BackupLBA                uint64
+	FirstUsableLBA           uint64
+	LastUsableLBA            uint64
+	DiskGUID                 [DiskGUIDSize]byte
+	StartingLBAEntries       uint64
+	NumberOfPartitionEntries uint32
+	SizeOfPartitionEntry     uint32
+	PartitionEntriesCRC32    uint32
+}
+
+// LBA 2-33
+type GPTPartitionEntry struct {
+	PartitionTypeGUID   [PartitionGUID]byte
+	UniquePartitionGUID [PartitionGUID]byte
+	FirstLBA            uint64
+	LastLBA             uint64
+	Attributes          uint64
+	PartitionName       [UTF16LECharacters]byte
+}
+
+type VmdkParserArgs struct {
+	Path string `vfilter:"required,field=path"`
+}
+
+type VmdkParser struct{}
+
+func (self VmdkParser) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfilter.PluginInfo {
+	return &vfilter.PluginInfo{
+		Name:     "vmdk_parser",
+		Doc:      "parses Sparse VMDK files.",
+		ArgType:  type_map.AddType(scope, &VmdkParser{}),
+		Metadata: vql.VQLMetadata().Permissions(acls.PREPARE_RESULTS).Build(),
+		Version:  1,
+	}
+}
+
+func (self VmdkParser) Call(ctx context.Context,
+	scope vfilter.Scope,
+	args *ordereddict.Dict) <-chan vfilter.Row {
+	output_chan := make(chan vfilter.Row)
+
+	go func() {
+		defer close(output_chan)
+		defer vql_subsystem.RegisterMonitor("vmdk_parser", args)()
+
+		arg := &VmdkParserArgs{}
+		err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
+		if err != nil {
+			scope.Log("[CONCAT]: %s", err.Error())
+			return
+		}
+
+		fd, err := os.Open(arg.Path)
+		if err != nil {
+			return
+		}
+		defer fd.Close()
+
+		stat, err := fd.Stat()
+		if err != nil {
+			return
+		}
+
+		vmdk_ctx, err := getVmdkCtx(fd, int(stat.Size()), arg.Path)
+		if err != nil {
+			return
+		}
+
+		header, err := parseGPTHeader(vmdk_ctx)
+		if err != nil {
+			return
+		}
+
+		partitions, err := parseGPTPartitionEntries(vmdk_ctx, header)
+		if err != nil {
+			return
+		}
+
+		row := map[string]interface{}{"Result": partitions}
+		select {
+		case <-ctx.Done():
+			return
+
+		case output_chan <- row:
+		}
+	}()
+
+	return output_chan
+
+}
+
+func init() {
+	vql_subsystem.RegisterPlugin(&VmdkParser{})
+}
+
+func parseGPTHeader(r io.ReaderAt) (*GPTHeader, error) {
+	buf := make([]byte, SectorSize)
+
+	if _, err := r.ReadAt(buf, SectorSize); err != nil {
+		return nil, fmt.Errorf("failed to read GPT header: %v", err)
+	}
+
+	// fmt.Println("GPT Header: ", buf)
+	// fmt.Printf("%c\n", buf[:8])
+
+	if string(buf[:8]) != "EFI PART" {
+		return nil, fmt.Errorf("GPT header signature not found")
+	}
+
+	// All are little endian: https://en.wikipedia.org/wiki/GUID_Partition_Table
+	header := &GPTHeader{
+		Revision:                 binary.LittleEndian.Uint32(buf[8:12]),
+		HeaderSize:               binary.LittleEndian.Uint32(buf[12:16]),
+		HeaderCRC32:              binary.LittleEndian.Uint32(buf[16:20]),
+		Reserved:                 binary.LittleEndian.Uint32(buf[20:24]),
+		CurrentLBA:               binary.LittleEndian.Uint64(buf[24:32]),
+		BackupLBA:                binary.LittleEndian.Uint64(buf[32:40]),
+		FirstUsableLBA:           binary.LittleEndian.Uint64(buf[40:48]),
+		LastUsableLBA:            binary.LittleEndian.Uint64(buf[48:56]),
+		StartingLBAEntries:       binary.LittleEndian.Uint64(buf[72:80]),
+		NumberOfPartitionEntries: binary.LittleEndian.Uint32(buf[80:84]),
+		SizeOfPartitionEntry:     binary.LittleEndian.Uint32(buf[84:88]),
+		PartitionEntriesCRC32:    binary.LittleEndian.Uint32(buf[88:92]),
+	}
+
+	copy(header.Signature[:], buf[:8])
+	copy(header.DiskGUID[:], buf[56:72])
+
+	return header, nil
+}
+
+func parseGPTPartitionEntries(r io.ReaderAt, header *GPTHeader) ([]GPTPartitionEntry, error) {
+	num_entries := header.NumberOfPartitionEntries
+	size_entry := header.SizeOfPartitionEntry
+	total_size := int64(num_entries) * int64(size_entry)
+	entries_data := make([]byte, total_size)
+	start_offset := int64(header.StartingLBAEntries) * SectorSize
+	if _, err := r.ReadAt(entries_data, start_offset); err != nil {
+		return nil, fmt.Errorf("failed to read partition entries: %v", err)
+	}
+
+	var partitions []GPTPartitionEntry
+	for i := 0; i < int(num_entries); i++ {
+
+		// for every 128 bytes, we have a partition entry
+		offset := i * int(size_entry)
+
+		// check if the entry is empty
+		entry_data := entries_data[offset : offset+int(size_entry)]
+		is_empty := true
+		for j := 0; j < 16; j++ {
+			if entry_data[j] != 0 {
+				is_empty = false
+				break
+			}
+		}
+
+		// if entry isn't empty, it's a legit partition that can be parsed
+		if !is_empty {
+			var entry GPTPartitionEntry
+			copy(entry.PartitionTypeGUID[:], entry_data[0:16])
+			copy(entry.UniquePartitionGUID[:], entry_data[16:32])
+			entry.FirstLBA = binary.LittleEndian.Uint64(entry_data[32:40])
+			entry.LastLBA = binary.LittleEndian.Uint64(entry_data[40:48])
+			entry.Attributes = binary.LittleEndian.Uint64(entry_data[48:56])
+			copy(entry.PartitionName[:], entry_data[56:128])
+			partitions = append(partitions, entry)
+		}
+	}
+	return partitions, nil
+}
+
+func getVmdkCtx(reader io.ReaderAt, size int, vmdk_path string) (*parser.VMDKContext, error) {
+	return parser.GetVMDKContext(reader, size,
+		func(filename string) (io.ReaderAt, func(), error) {
+			full_path := filepath.Join(filepath.Dir(vmdk_path), filename)
+			extent_file, err := os.Open(full_path)
+			if err != nil {
+				return nil, nil, fmt.Errorf("error opening extent file %s: %w", full_path, err)
+			}
+			return extent_file, func() { extent_file.Close() }, nil
+		})
+}
