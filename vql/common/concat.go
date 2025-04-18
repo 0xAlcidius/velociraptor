@@ -58,8 +58,7 @@ func (self ConcatPlugin) Call(ctx context.Context,
 
 		}
 		fmt.Println("[CONCAT] NEW STRING: ", newString)
-		fmt.Println("[CONCAT] OUTPUT: ", output_chan)
-		fmt.Println("[CONCAT] OUTPUT: ", <-output_chan)
+		fmt.Println("[CONCAT] OUTPUT: ", &output_chan)
 	}()
 
 	return output_chan
