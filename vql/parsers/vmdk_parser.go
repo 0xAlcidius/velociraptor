@@ -86,33 +86,41 @@ func (self VmdkParser) Call(ctx context.Context,
 		arg := &VmdkParserArgs{}
 		err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error extracting args: ", err.Error())
 			scope.Log("[CONCAT]: %s", err.Error())
 			return
 		}
 
+		fmt.Println("[VMDK_PARSER] Path: ", arg.Path)
+
 		fd, err := os.Open(arg.Path)
 		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error opening file: ", err.Error())
 			return
 		}
 		defer fd.Close()
 
 		stat, err := fd.Stat()
 		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error getting file stat: ", err.Error())
 			return
 		}
 
 		vmdk_ctx, err := getVmdkCtx(fd, int(stat.Size()), arg.Path)
 		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error getting VMDK context: ", err.Error())
 			return
 		}
 
 		header, err := parseGPTHeader(vmdk_ctx)
 		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
 			return
 		}
 
 		partitions, err := parseGPTPartitionEntries(vmdk_ctx, header)
 		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
 			return
 		}
 
