@@ -122,12 +122,15 @@ func (self VmdkParser) Call(ctx context.Context,
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
 			data, err := io.ReadAll(fd)
+
+			fmt.Println("[VMDK_PARSER] File read before err: ", filename.String())
+
 			if err != nil {
 				fmt.Println("[VMDK_PARSER] Error reading file: ", err.Error())
 				return
 			}
 
-			fmt.Println("[VMDK_PARSER] File read: ", filename.String())
+			fmt.Println("[VMDK_PARSER] File read after err: ", filename.String())
 
 			reader := bytes.NewReader(data)
 
