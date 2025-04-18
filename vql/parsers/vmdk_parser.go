@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
-	"github.com/Velocidex/go-vmdk/parser"
 	"github.com/Velocidex/ordereddict"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
+	"www.velocidex.com/golang/velociraptor/accessors"
 	"www.velocidex.com/golang/velociraptor/acls"
 	"www.velocidex.com/golang/velociraptor/vql"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
@@ -57,8 +56,8 @@ type GPTPartitionEntry struct {
 }
 
 type VmdkParserArgs struct {
-	Path     string `vfilter:"required,field=Path"`
-	Accessor string `vfilter:"optional,field=accessor,doc=The accessor to use."`
+	Filenames []*accessors.OSPath `vfilter:"required,field=filename,doc=A list of log files to parse."`
+	Accessor  string              `vfilter:"optional,field=accessor,doc=The accessor to use."`
 }
 
 type VmdkParser struct{}
@@ -92,7 +91,7 @@ func (self VmdkParser) Call(ctx context.Context,
 			return
 		}
 
-		fmt.Println("[VMDK_PARSER] Path: ", arg.Path)
+		fmt.Println("[VMDK_PARSER] Path: ", arg.Filenames)
 
 		err = vql_subsystem.CheckFilesystemAccess(scope, arg.Accessor)
 		if err != nil {
@@ -103,43 +102,41 @@ func (self VmdkParser) Call(ctx context.Context,
 		fmt.Println("[VMDK_PARSER] Filesystem access checked")
 		fmt.Println("[VMDK_PARSER] Current System: ", os.Getenv("OS"))
 
-		fd, err := os.Open(arg.Path)
+		accessor, err := accessors.GetAccessor(arg.Accessor, scope)
 		if err != nil {
-			fmt.Println("[VMDK_PARSER] Error opening file: ", err.Error())
-			return
-		}
-		defer fd.Close()
-
-		stat, err := fd.Stat()
-		if err != nil {
-			fmt.Println("[VMDK_PARSER] Error getting file stat: ", err.Error())
+			fmt.Println("[VMDK_PARSER] Error getting accessor: ", err.Error())
 			return
 		}
 
-		vmdk_ctx, err := getVmdkCtx(fd, int(stat.Size()), arg.Path)
-		if err != nil {
-			fmt.Println("[VMDK_PARSER] Error getting VMDK context: ", err.Error())
-			return
-		}
-
-		header, err := parseGPTHeader(vmdk_ctx)
-		if err != nil {
-			fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
-			return
-		}
-
-		partitions, err := parseGPTPartitionEntries(vmdk_ctx, header)
-		if err != nil {
-			fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
-			return
-		}
-
-		for _, entry := range partitions {
-			select {
-			case <-ctx.Done():
+		for _, filename := range arg.Filenames {
+			fd, err := accessor.OpenWithOSPath(filename)
+			if err != nil {
+				fmt.Println("[VMDK_PARSER] Error opening file: ", err.Error())
 				return
-			case output_chan <- partitionEntryToMap(entry):
 			}
+			defer fd.Close()
+
+			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
+
+			// 	header, err := parseGPTHeader(vmdk_ctx)
+			// 	if err != nil {
+			// 		fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
+			// 		return
+			// 	}
+
+			// 	partitions, err := parseGPTPartitionEntries(vmdk_ctx, header)
+			// 	if err != nil {
+			// 		fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
+			// 		return
+			// 	}
+			// }
+
+			// for _, entry := range partitions {
+			// 	select {
+			// 	case <-ctx.Done():
+			// 		return
+			// 	case output_chan <- partitionEntryToMap(entry):
+			// 	}
 		}
 	}()
 
@@ -243,16 +240,4 @@ func parseGPTPartitionEntries(r io.ReaderAt, header *GPTHeader) ([]GPTPartitionE
 		}
 	}
 	return partitions, nil
-}
-
-func getVmdkCtx(reader io.ReaderAt, size int, vmdk_path string) (*parser.VMDKContext, error) {
-	return parser.GetVMDKContext(reader, size,
-		func(filename string) (io.ReaderAt, func(), error) {
-			full_path := filepath.Join(filepath.Dir(vmdk_path), filename)
-			extent_file, err := os.Open(full_path)
-			if err != nil {
-				return nil, nil, fmt.Errorf("error opening extent file %s: %w", full_path, err)
-			}
-			return extent_file, func() { extent_file.Close() }, nil
-		})
 }
