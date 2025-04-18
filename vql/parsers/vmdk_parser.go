@@ -121,7 +121,7 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
-			buf := make([]byte, 8)
+			buf := make([]byte, 1024)
 			n, err := fd.Read(buf)
 
 			fmt.Println("[VMDK_PARSER] Contents: ", string(buf))
@@ -136,7 +136,7 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File read after err: ", filename.String())
 
-			//reader := bytes.NewReader(data)
+			reader := bytes.NewReader(data)
 
 			fmt.Println("[VMDK_PARSER] Reader created")
 
