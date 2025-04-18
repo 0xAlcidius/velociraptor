@@ -11474,7 +11474,7 @@
   - windows_amd64_cgo
 - name: concat
   description : Concatenate a list of strings.
-  type: Function
+  type: Plugin
   args:
   - name: string1
     type: string
