@@ -50,12 +50,15 @@ func (self ConcatPlugin) Call(ctx context.Context,
 		fmt.Println("[CONCAT] STRING2: ", arg.String2)
 
 		newString := arg.String1 + arg.String2
+
+		row := map[string]interface{}{"Result": newString}
 		select {
 		case <-ctx.Done():
 			fmt.Println("[CONCAT] CANCELED")
 			return
 
-		case output_chan <- newString:
+		case output_chan <- row:
+
 			fmt.Println("[CONCAT] SENT STRING: ", newString)
 
 		}
