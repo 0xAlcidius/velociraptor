@@ -121,50 +121,41 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
-			buf := make([]byte, 2048)
-			n, err := fd.Read(buf)
-
-			fmt.Println("[VMDK_PARSER] Contents: ", string(buf))
-			fmt.Println("[VMDK_PARSER] Bytes read: ", n)
-
-			fmt.Println("[VMDK_PARSER] File read before err: ", filename.String())
-
+			buff := bytes.NewBuffer([]byte{})
+			size, err := io.Copy(buff, fd)
 			if err != nil {
 				fmt.Println("[VMDK_PARSER] Error reading file: ", err.Error())
 				return
 			}
 
-			fmt.Println("[VMDK_PARSER] File read after err: ", filename.String())
+			reader := bytes.NewReader(buff.Bytes())
+			fmt.Println("[VMDK_PARSER] File read: ", size)
 
-			//reader := bytes.NewReader(data)
+			header, err := parseGPTHeader(reader)
+			if err != nil {
+				fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
+				return
+			}
 
-			fmt.Println("[VMDK_PARSER] Reader created")
+			fmt.Println("[VMDK_PARSER] GPT header parsed")
 
-			// header, err := parseGPTHeader(reader)
-			// if err != nil {
-			// 	fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
-			// 	return
-			// }
+			partitions, err := parseGPTPartitionEntries(reader, header)
+			if err != nil {
+				fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
+				return
+			}
 
-			// fmt.Println("[VMDK_PARSER] GPT header parsed")
+			fmt.Println("[VMDK_PARSER] GPT partition entries parsed")
+			fmt.Println("[VMDK_PARSER] Number of partitions: ", len(partitions))
 
-			// partitions, err := parseGPTPartitionEntries(reader, header)
-			// if err != nil {
-			// 	fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
-			// 	return
-			// }
-
-			// fmt.Println("[VMDK_PARSER] GPT partition entries parsed")
-			// fmt.Println("[VMDK_PARSER] Number of partitions: ", len(partitions))
-
-			// for _, entry := range partitions {
-			// 	fmt.Println("Partition Entry: ", decodeUTF16(entry.PartitionName[:]))
-			// 	select {
-			// 	case <-ctx.Done():
-			// 		return
-			// 	case output_chan <- partitionEntryToMap(entry):
-			// 	}
-			// }
+			for _, entry := range partitions {
+				fmt.Println("Partition Entry: ", decodeUTF16(entry.PartitionName[:]))
+				select {
+				case <-ctx.Done():
+					return
+				case output_chan <- partitionEntryToMap(entry):
+				}
+			}
 		}
 	}()
 
