@@ -57,7 +57,8 @@ type GPTPartitionEntry struct {
 }
 
 type VmdkParserArgs struct {
-	Path string `vfilter:"required,field=Path"`
+	Path     string `vfilter:"required,field=Path"`
+	Accessor string `vfilter:"optional,field=accessor,doc=The accessor to use."`
 }
 
 type VmdkParser struct{}
@@ -92,6 +93,15 @@ func (self VmdkParser) Call(ctx context.Context,
 		}
 
 		fmt.Println("[VMDK_PARSER] Path: ", arg.Path)
+
+		err = vql_subsystem.CheckFilesystemAccess(scope, arg.Accessor)
+		if err != nil {
+			fmt.Println("[VMDK_PARSER] Error checking filesystem access: ", err.Error())
+			return
+		}
+
+		fmt.Println("[VMDK_PARSER] Filesystem access checked")
+		fmt.Println("[VMDK_PARSER] Current System: ", os.Getenv("OS"))
 
 		fd, err := os.Open(arg.Path)
 		if err != nil {
