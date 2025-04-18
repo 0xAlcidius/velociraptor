@@ -121,7 +121,11 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
-			data, err := io.ReadAll(fd)
+			buf := make([]byte, SectorSize)
+			n, err := fd.Read(buf)
+
+			fmt.Println("[VMDK_PARSER] Contents: ", string(buf))
+			fmt.Println("[VMDK_PARSER] Bytes read: ", n)
 
 			fmt.Println("[VMDK_PARSER] File read before err: ", filename.String())
 
@@ -132,35 +136,35 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File read after err: ", filename.String())
 
-			reader := bytes.NewReader(data)
+			//reader := bytes.NewReader(data)
 
 			fmt.Println("[VMDK_PARSER] Reader created")
 
-			header, err := parseGPTHeader(reader)
-			if err != nil {
-				fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
-				return
-			}
+			// header, err := parseGPTHeader(reader)
+			// if err != nil {
+			// 	fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
+			// 	return
+			// }
 
-			fmt.Println("[VMDK_PARSER] GPT header parsed")
+			// fmt.Println("[VMDK_PARSER] GPT header parsed")
 
-			partitions, err := parseGPTPartitionEntries(reader, header)
-			if err != nil {
-				fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
-				return
-			}
+			// partitions, err := parseGPTPartitionEntries(reader, header)
+			// if err != nil {
+			// 	fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
+			// 	return
+			// }
 
-			fmt.Println("[VMDK_PARSER] GPT partition entries parsed")
-			fmt.Println("[VMDK_PARSER] Number of partitions: ", len(partitions))
+			// fmt.Println("[VMDK_PARSER] GPT partition entries parsed")
+			// fmt.Println("[VMDK_PARSER] Number of partitions: ", len(partitions))
 
-			for _, entry := range partitions {
-				fmt.Println("Partition Entry: ", decodeUTF16(entry.PartitionName[:]))
-				select {
-				case <-ctx.Done():
-					return
-				case output_chan <- partitionEntryToMap(entry):
-				}
-			}
+			// for _, entry := range partitions {
+			// 	fmt.Println("Partition Entry: ", decodeUTF16(entry.PartitionName[:]))
+			// 	select {
+			// 	case <-ctx.Done():
+			// 		return
+			// 	case output_chan <- partitionEntryToMap(entry):
+			// 	}
+			// }
 		}
 	}()
 
@@ -196,8 +200,8 @@ func parseGPTHeader(r io.ReaderAt) (*GPTHeader, error) {
 		return nil, fmt.Errorf("failed to read GPT header: %v", err)
 	}
 
-	// fmt.Println("GPT Header: ", buf)
-	// fmt.Printf("%c\n", buf[:8])
+	fmt.Println("GPT Header: ", buf)
+	fmt.Printf("%c\n", buf[:8])
 
 	if string(buf[:8]) != "EFI PART" {
 		return nil, fmt.Errorf("GPT header signature not found")
