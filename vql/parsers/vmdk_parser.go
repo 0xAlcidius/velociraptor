@@ -121,7 +121,7 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
-			buf := make([]byte, 1024)
+			buf := make([]byte, 2048)
 			n, err := fd.Read(buf)
 
 			fmt.Println("[VMDK_PARSER] Contents: ", string(buf))
