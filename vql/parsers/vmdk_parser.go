@@ -136,7 +136,7 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File read after err: ", filename.String())
 
-			reader := bytes.NewReader(data)
+			//reader := bytes.NewReader(data)
 
 			fmt.Println("[VMDK_PARSER] Reader created")
 
