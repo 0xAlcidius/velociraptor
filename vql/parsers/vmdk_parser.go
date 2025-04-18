@@ -57,7 +57,7 @@ type GPTPartitionEntry struct {
 }
 
 type VmdkParserArgs struct {
-	Path string `vfilter:"required,field=path"`
+	Path string `vfilter:"required,field=Path"`
 }
 
 type VmdkParser struct{}
