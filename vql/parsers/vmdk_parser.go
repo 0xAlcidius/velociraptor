@@ -127,7 +127,11 @@ func (self VmdkParser) Call(ctx context.Context,
 				return
 			}
 
+			fmt.Println("[VMDK_PARSER] File read: ", filename.String())
+
 			reader := bytes.NewReader(data)
+
+			fmt.Println("[VMDK_PARSER] Reader created")
 
 			header, err := parseGPTHeader(reader)
 			if err != nil {
@@ -135,13 +139,19 @@ func (self VmdkParser) Call(ctx context.Context,
 				return
 			}
 
+			fmt.Println("[VMDK_PARSER] GPT header parsed")
+
 			partitions, err := parseGPTPartitionEntries(reader, header)
 			if err != nil {
 				fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
 				return
 			}
 
+			fmt.Println("[VMDK_PARSER] GPT partition entries parsed")
+			fmt.Println("[VMDK_PARSER] Number of partitions: ", len(partitions))
+
 			for _, entry := range partitions {
+				fmt.Println("Partition Entry: ", decodeUTF16(entry.PartitionName[:]))
 				select {
 				case <-ctx.Done():
 					return
