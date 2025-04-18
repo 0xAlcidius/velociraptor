@@ -27,6 +27,8 @@ const (
 	DiskGUIDSize      = 16
 )
 
+var file *accessors.OSPath
+
 // LBA 1
 type GPTHeader struct {
 	Signature                [SignaturePosition]byte
@@ -109,7 +111,8 @@ func (self VmdkParser) Call(ctx context.Context,
 		}
 
 		for _, filename := range arg.Filenames {
-			fd, err := accessor.OpenWithOSPath(filename)
+			file = filename
+			fd, err := accessor.OpenWithOSPath(file)
 			if err != nil {
 				fmt.Println("[VMDK_PARSER] Error opening file: ", err.Error())
 				return
@@ -118,25 +121,33 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
-			// 	header, err := parseGPTHeader(vmdk_ctx)
-			// 	if err != nil {
-			// 		fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
-			// 		return
-			// 	}
+			data, err := io.ReadAll(fd)
+			if err != nil {
+				fmt.Println("[VMDK_PARSER] Error reading file: ", err.Error())
+				return
+			}
 
-			// 	partitions, err := parseGPTPartitionEntries(vmdk_ctx, header)
-			// 	if err != nil {
-			// 		fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
-			// 		return
-			// 	}
-			// }
+			reader := bytes.NewReader(data)
 
-			// for _, entry := range partitions {
-			// 	select {
-			// 	case <-ctx.Done():
-			// 		return
-			// 	case output_chan <- partitionEntryToMap(entry):
-			// 	}
+			header, err := parseGPTHeader(reader)
+			if err != nil {
+				fmt.Println("[VMDK_PARSER] Error parsing GPT header: ", err.Error())
+				return
+			}
+
+			partitions, err := parseGPTPartitionEntries(reader, header)
+			if err != nil {
+				fmt.Println("[VMDK_PARSER] Error parsing GPT partition entries: ", err.Error())
+				return
+			}
+
+			for _, entry := range partitions {
+				select {
+				case <-ctx.Done():
+					return
+				case output_chan <- partitionEntryToMap(entry):
+				}
+			}
 		}
 	}()
 
