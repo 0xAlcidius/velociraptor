@@ -74,6 +74,8 @@ func (self VmdkParser) Call(ctx context.Context,
 	args *ordereddict.Dict) <-chan vfilter.Row {
 	output_chan := make(chan vfilter.Row)
 
+	fmt.Println("[VMDK_PARSER] VMDK Parser called")
+
 	go func() {
 		defer close(output_chan)
 		defer vql_subsystem.RegisterMonitor("vmdk_parser", args)()
