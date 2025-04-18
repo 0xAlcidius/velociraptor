@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/Velocidex/go-vmdk/parser"
 	"github.com/Velocidex/ordereddict"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 	"www.velocidex.com/golang/velociraptor/acls"
 	"www.velocidex.com/golang/velociraptor/vql"
 	vql_subsystem "www.velocidex.com/golang/velociraptor/vql"
@@ -113,12 +116,12 @@ func (self VmdkParser) Call(ctx context.Context,
 			return
 		}
 
-		row := map[string]interface{}{"Result": partitions}
-		select {
-		case <-ctx.Done():
-			return
-
-		case output_chan <- row:
+		for _, entry := range partitions {
+			select {
+			case <-ctx.Done():
+				return
+			case output_chan <- partitionEntryToMap(entry):
+			}
 		}
 	}()
 
@@ -128,6 +131,23 @@ func (self VmdkParser) Call(ctx context.Context,
 
 func init() {
 	vql_subsystem.RegisterPlugin(&VmdkParser{})
+}
+
+func partitionEntryToMap(entry GPTPartitionEntry) map[string]interface{} {
+	return map[string]interface{}{
+		"PartitionTypeGUID":   fmt.Sprintf("%x", entry.PartitionTypeGUID),
+		"UniquePartitionGUID": fmt.Sprintf("%x", entry.UniquePartitionGUID),
+		"FirstLBA":            entry.FirstLBA,
+		"LastLBA":             entry.LastLBA,
+		"Attributes":          entry.Attributes,
+		"PartitionName":       decodeUTF16(entry.PartitionName[:]),
+	}
+}
+
+func decodeUTF16(data []byte) string {
+	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
+	utf8, _ := io.ReadAll(transform.NewReader(bytes.NewReader(data), decoder))
+	return string(utf8)
 }
 
 func parseGPTHeader(r io.ReaderAt) (*GPTHeader, error) {
