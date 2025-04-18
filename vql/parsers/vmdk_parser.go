@@ -125,6 +125,8 @@ func (self VmdkParser) Call(ctx context.Context,
 
 			fmt.Println("[VMDK_PARSER] Buffer created")
 
+			fmt.Println("[VMDK_PARSER] File descriptor: ", fd)
+
 			size, err := io.Copy(buff, fd)
 
 			fmt.Println("[VMDK_PARSER] File size: ", size)
