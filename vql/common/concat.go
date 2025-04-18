@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Velocidex/ordereddict"
 	"www.velocidex.com/golang/velociraptor/acls"
@@ -41,29 +40,19 @@ func (self ConcatPlugin) Call(ctx context.Context,
 		arg := &ConcatPluginArgs{}
 		err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 		if err != nil {
-			fmt.Println("[CONCAT]: ERROR:", err.Error())
 			scope.Log("[CONCAT]: %s", err.Error())
 			return
 		}
-
-		fmt.Println("[CONCAT] STRING1: ", arg.String1)
-		fmt.Println("[CONCAT] STRING2: ", arg.String2)
 
 		newString := arg.String1 + arg.String2
 
 		row := map[string]interface{}{"Result": newString}
 		select {
 		case <-ctx.Done():
-			fmt.Println("[CONCAT] CANCELED")
 			return
 
 		case output_chan <- row:
-
-			fmt.Println("[CONCAT] SENT STRING: ", newString)
-
 		}
-		fmt.Println("[CONCAT] NEW STRING: ", newString)
-		fmt.Println("[CONCAT] OUTPUT: ", output_chan)
 	}()
 
 	return output_chan
