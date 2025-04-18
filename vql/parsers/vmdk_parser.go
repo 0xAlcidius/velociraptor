@@ -122,11 +122,19 @@ func (self VmdkParser) Call(ctx context.Context,
 			fmt.Println("[VMDK_PARSER] File opened: ", filename.String())
 
 			buff := bytes.NewBuffer([]byte{})
+
+			fmt.Println("[VMDK_PARSER] Buffer created")
+
 			size, err := io.Copy(buff, fd)
+
+			fmt.Println("[VMDK_PARSER] File size: ", size)
+
 			if err != nil {
 				fmt.Println("[VMDK_PARSER] Error reading file: ", err.Error())
 				return
 			}
+
+			fmt.Println("[VMDK_PARSER] File read into buffer")
 
 			reader := bytes.NewReader(buff.Bytes())
 			fmt.Println("[VMDK_PARSER] File read: ", size)
