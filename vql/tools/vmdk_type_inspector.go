@@ -14,24 +14,24 @@ import (
 	"www.velocidex.com/golang/vfilter/arg_parser"
 )
 
-type VmdkTypeInspectorArgs struct {
+type VmdkTypeInspectorPluginArgs struct {
 	Filenames []*accessors.OSPath `vfilter:"required,field=filename,doc=A list of log files to parse."`
 	Accessor  string              `vfilter:"optional,field=accessor,doc=The accessor to use."`
 }
 
-type VmdkTypeInspector struct{}
+type VmdkTypeInspectorPlugin struct{}
 
-func (self VmdkTypeInspector) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfilter.PluginInfo {
+func (self VmdkTypeInspectorPlugin) Info(scope vfilter.Scope, type_map *vfilter.TypeMap) *vfilter.PluginInfo {
 	return &vfilter.PluginInfo{
 		Name:     "vmdk_type_inspector",
 		Doc:      "identifies the type of a vmdk file.",
-		ArgType:  type_map.AddType(scope, &VmdkTypeInspector{}),
+		ArgType:  type_map.AddType(scope, &VmdkTypeInspectorPlugin{}),
 		Metadata: vql.VQLMetadata().Permissions(acls.PREPARE_RESULTS).Build(),
 		Version:  1,
 	}
 }
 
-func (self VmdkTypeInspector) Call(ctx context.Context,
+func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 	scope vfilter.Scope,
 	args *ordereddict.Dict) <-chan vfilter.Row {
 	output_chan := make(chan vfilter.Row)
@@ -42,7 +42,7 @@ func (self VmdkTypeInspector) Call(ctx context.Context,
 		defer close(output_chan)
 		defer vql_subsystem.RegisterMonitor("vmdk_type_inspector", args)()
 
-		arg := &VmdkTypeInspectorArgs{}
+		arg := &VmdkTypeInspectorPluginArgs{}
 		err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 		if err != nil {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error extracting args: ", err.Error())
@@ -92,11 +92,9 @@ func (self VmdkTypeInspector) Call(ctx context.Context,
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytes_read)
 		}
 	}()
-
 	return output_chan
-
 }
 
 func init() {
-	vql_subsystem.RegisterPlugin(&VmdkTypeInspector{})
+	vql_subsystem.RegisterPlugin(&VmdkTypeInspectorPlugin{})
 }
