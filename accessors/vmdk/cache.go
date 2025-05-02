@@ -98,6 +98,7 @@ func getCachedVMDKFile(
 	}
 
 	vmdk_file := &VMDKFile{
+		config: createVMDKConfig(vmdk_ctx),
 		reader: vmdk_ctx,
 		size:   uint64(vmdk_ctx.Size()),
 		closer: func() {
@@ -113,4 +114,12 @@ func getCachedVMDKFile(
 		key, len(stats.Extents), json.MustMarshalString(stats))
 
 	return vmdk_file, nil
+}
+
+func createVMDKConfig(vmdk_ctx *parser.VMDKContext) map[string]interface{} {
+	configMap := make(map[string]interface{})
+	if cfg := vmdk_ctx.Config(); cfg != nil {
+		configMap["VMDKCreateType"] = cfg.VMDKCreateType
+	}
+	return configMap
 }

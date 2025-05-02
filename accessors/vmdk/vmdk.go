@@ -12,6 +12,7 @@ import (
 )
 
 type VMDKFile struct {
+	config map[string]interface{} `vfilter:"optional,field=config,doc=VMware VMDK descriptor fields"`
 	reader io.ReaderAt
 
 	mu     sync.Mutex
@@ -65,6 +66,7 @@ func (self *VMDKFile) _Copy() *VMDKFile {
 	defer self.mu.Unlock()
 
 	return &VMDKFile{
+		config: self.config,
 		reader: self.reader,
 		offset: 0,
 		size:   self.size,
