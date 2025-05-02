@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/Velocidex/ordereddict"
 	"www.velocidex.com/golang/velociraptor/accessors"
@@ -20,6 +21,10 @@ const (
 	FLAT    VmdkType = "flat"
 	vmfs    VmdkType = "vmfs"
 	unknown VmdkType = "unknown"
+)
+
+const (
+	sectorSize = 512
 )
 
 type VmdkTypeInspectorPluginArgs struct {
@@ -82,13 +87,29 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		}
 		defer fd.Close()
 
-		contents := make([]byte, 64)
-		bytes_read, err := fd.Read(contents)
+		contents := make([]byte, sectorSize)
+		bytesRead := 0
+		for bytesRead < sectorSize {
+			n, err := fd.Read(contents[bytesRead:])
+			if err != nil {
+				if err == io.EOF {
+					break // reached end of file, partial read is okay
+				} else {
+					fmt.Errorf("failed to read file: %w", err)
+				}
+
+			}
+			if n == 0 {
+				break
+			}
+			bytesRead += n
+		}
+
 		if err != nil {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
 			return
 		}
-		if bytes_read < 64 {
+		if bytesRead < 64 {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
 			return
 		}
