@@ -119,8 +119,8 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely NOT monolithic sparse VMDK")
 		}
 
-		// fmt.Println("[VMDK_TYPE_INSPECTOR] Full contents: ", string(contents))
-		// fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytesRead)
+		fmt.Println("[VMDK_TYPE_INSPECTOR] Full contents: ", string(contents))
+		fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytesRead)
 
 	}()
 	return output_chan
