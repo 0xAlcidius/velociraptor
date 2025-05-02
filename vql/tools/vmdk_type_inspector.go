@@ -95,7 +95,7 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
 			return
 		}
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Buffer: ", buffer)
+		fmt.Println("[VMDK_TYPE_INSPECTOR] Buffer: ", string(buffer))
 		fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytes_read)
 	}()
 	return output_chan
