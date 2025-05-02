@@ -20,10 +20,12 @@ import (
 type VmdkType string
 
 const (
-	SPARSE  VmdkType = "sparse"
-	FLAT    VmdkType = "flat"
-	vmfs    VmdkType = "vmfs"
-	unknown VmdkType = "unknown"
+	MONOLITHICSPARSE VmdkType = "MonoliothicSparse"
+	MONOLITHICFLAT   VmdkType = "monolithicFlat"
+	SPLITSPARSE      VmdkType = "twoGbMaxExtentSparse"
+	SPLITFLAT        VmdkType = "twoGbMaxExtentFlat"
+	VMFS             VmdkType = "vmfs"
+	UNKNOWN          VmdkType = "unknown"
 )
 
 const (
@@ -31,7 +33,7 @@ const (
 )
 
 var (
-	vmdkType = unknown
+	vmdkType = UNKNOWN
 )
 
 type VmdkTypeInspectorPluginArgs struct {
@@ -118,18 +120,20 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		}
 
 		if string(contents[:4]) == "KDMV" {
-			vmdkType = SPARSE
+			vmdkType = MONOLITHICSPARSE
 		} else if string(contents[:21]) == "# Disk DescriptorFile" {
 			scanner := bufio.NewScanner(bytes.NewReader(contents))
 			for scanner.Scan() {
 				line := strings.TrimSpace(scanner.Text())
 				if strings.HasPrefix(line, "createType") {
-					if strings.Contains(line, "flat") {
-						vmdkType = FLAT
-					} else if strings.Contains(line, "sparse") {
-						vmdkType = SPARSE
-					} else if strings.Contains(line, "vmfs") {
-						vmdkType = vmfs
+					if strings.Contains(line, string(MONOLITHICFLAT)) {
+						vmdkType = MONOLITHICFLAT
+					} else if strings.Contains(line, string(SPLITSPARSE)) {
+						vmdkType = SPLITSPARSE
+					} else if strings.Contains(line, string(SPLITFLAT)) {
+						vmdkType = SPLITFLAT
+					} else if strings.Contains(line, string(VMFS)) {
+						vmdkType = VMFS
 					}
 					break
 				}
