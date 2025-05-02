@@ -3,7 +3,6 @@ package tools
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/Velocidex/ordereddict"
 	"www.velocidex.com/golang/velociraptor/accessors"
@@ -55,7 +54,7 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		err := arg_parser.ExtractArgsWithContext(ctx, scope, args, arg)
 		if err != nil {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error extracting args: ", err.Error())
-			scope.Log("[CONCAT]: %s", err.Error())
+			scope.Log("[VMDK_TYPE_INSPECTOR]: %s", err.Error())
 			return
 		}
 
@@ -68,15 +67,12 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		}
 
 		fmt.Println("[VMDK_TYPE_INSPECTOR] Filesystem access checked")
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Current System: ", os.Getenv("OS"))
 
 		accessor, err := accessors.GetAccessor(arg.Accessor, scope)
 		if err != nil {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error getting accessor: ", err.Error())
 			return
 		}
-
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Accessor: ", accessor)
 
 		file := arg.Filename
 		fd, err := accessor.OpenWithOSPath(file)
@@ -98,11 +94,11 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		}
 
 		fmt.Println("[VMDK_TYPE_INSPECTOR] 4 bytes: ", string(contents[:4]))
-		fmt.Println("[VMDK_TYPE_INSPECTOR] 20 bytes: ", string(contents[:20]))
+		fmt.Println("[VMDK_TYPE_INSPECTOR] 21 bytes: ", string(contents[:21]))
 
 		if string(contents[:4]) == "KDMV" {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely a Monolithic Sparse VMDK")
-		} else if string(contents[:20]) == "# Disk DescriptorFile" {
+		} else if string(contents[:21]) == "# Disk DescriptorFile" {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely NOT monolithic sparse VMDK")
 		}
 
