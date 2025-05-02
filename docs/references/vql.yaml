@@ -11393,6 +11393,31 @@
   platforms:
   - windows_386_cgo
   - windows_amd64_cgo
+- name: vmdk_type_inspector
+  description: |
+    Inspect a VMDK file and return the type of the VMDK.
+
+    This plugin is used to inspect a VMDK file and return the type of
+    the VMDK. The type of the VMDK is important for determining how to
+    access it.
+
+    ### Example
+
+    ```vql
+    SELECT * FROM vmdk_type_inspector(Filename="test.vmdk")
+    ```
+  type: Plugin
+  args:
+  - name: filename
+    type: accessors.OSPath
+    description: The filename to inspect.
+    required: true
+  category: experimental
+  platforms:
+  - darwin_amd64_cgo
+  - linux_amd64_cgo
+  - windows_386_cgo
+  - windows_amd64_cgo
 - name: write_crypto_file
   description: Write a query into an encrypted local storage file.
   type: Plugin

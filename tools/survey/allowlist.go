@@ -175,6 +175,7 @@ var (
 		"utf16_encode",
 		"uuid",
 		"version",
+		"vmdk_type_inspector",
 		"whoami",
 		"xor",
 	}
