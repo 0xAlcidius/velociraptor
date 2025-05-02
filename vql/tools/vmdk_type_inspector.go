@@ -93,7 +93,7 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			n, err := fd.Read(contents[bytesRead:])
 			if err != nil {
 				if err == io.EOF {
-					break // reached end of file, partial read is okay
+					break
 				} else {
 					fmt.Errorf("failed to read file: %w", err)
 				}
@@ -109,10 +109,6 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
 			return
 		}
-		if bytesRead < 64 {
-			fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
-			return
-		}
 
 		fmt.Println("[VMDK_TYPE_INSPECTOR] 4 bytes: ", string(contents[:4]))
 		fmt.Println("[VMDK_TYPE_INSPECTOR] 21 bytes: ", string(contents[:21]))
@@ -122,6 +118,9 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		} else if string(contents[:21]) == "# Disk DescriptorFile" {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely NOT monolithic sparse VMDK")
 		}
+
+		// fmt.Println("[VMDK_TYPE_INSPECTOR] Full contents: ", string(contents))
+		// fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytesRead)
 
 	}()
 	return output_chan
