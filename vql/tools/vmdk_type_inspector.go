@@ -1,9 +1,12 @@
 package tools
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/Velocidex/ordereddict"
 	"www.velocidex.com/golang/velociraptor/accessors"
@@ -25,6 +28,10 @@ const (
 
 const (
 	sectorSize = 512
+)
+
+var (
+	vmdkType = unknown
 )
 
 type VmdkTypeInspectorPluginArgs struct {
@@ -110,17 +117,31 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			return
 		}
 
-		fmt.Println("[VMDK_TYPE_INSPECTOR] 4 bytes: ", string(contents[:4]))
-		fmt.Println("[VMDK_TYPE_INSPECTOR] 21 bytes: ", string(contents[:21]))
-
 		if string(contents[:4]) == "KDMV" {
-			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely a Monolithic Sparse VMDK")
+			vmdkType = SPARSE
 		} else if string(contents[:21]) == "# Disk DescriptorFile" {
-			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely NOT monolithic sparse VMDK")
+			scanner := bufio.NewScanner(bytes.NewReader(contents))
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if strings.HasPrefix(line, "createType") {
+					if strings.Contains(line, "flat") {
+						vmdkType = FLAT
+					} else if strings.Contains(line, "sparse") {
+						vmdkType = SPARSE
+					} else if strings.Contains(line, "vmfs") {
+						vmdkType = vmfs
+					}
+					break
+				}
+			}
+		} else {
+			fmt.Println("[VMDK_TYPE_INSPECTOR] Not a supported VMDK file")
 		}
 
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Full contents: ", string(contents))
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytesRead)
+		output_chan <- vfilter.Row(map[string]interface{}{
+			"filename": arg.Filename.String(),
+			"type":     string(vmdkType),
+		})
 
 	}()
 	return output_chan
