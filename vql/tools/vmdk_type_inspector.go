@@ -88,7 +88,7 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
 			return
 		}
-		if bytes_read < 512 {
+		if bytes_read < 64 {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
 			return
 		}
