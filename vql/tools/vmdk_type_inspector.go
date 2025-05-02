@@ -14,9 +14,17 @@ import (
 	"www.velocidex.com/golang/vfilter/arg_parser"
 )
 
+type VmdkType string
+
+const (
+	SPARSE VmdkType = "sparse"
+	FLAT   VmdkType = "flat"
+	OTHER  VmdkType = "other"
+)
+
 type VmdkTypeInspectorPluginArgs struct {
-	Filenames []*accessors.OSPath `vfilter:"required,field=filename,doc=A list of log files to parse."`
-	Accessor  string              `vfilter:"optional,field=accessor,doc=The accessor to use."`
+	Filename *accessors.OSPath `vfilter:"required,field=filename,doc=A list of log files to parse."`
+	Accessor string            `vfilter:"optional,field=accessor,doc=The accessor to use."`
 }
 
 type VmdkTypeInspectorPlugin struct{}
@@ -50,7 +58,7 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			return
 		}
 
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Path: ", arg.Filenames)
+		fmt.Println("[VMDK_TYPE_INSPECTOR] Path: ", arg.Filename)
 
 		err = vql_subsystem.CheckFilesystemAccess(scope, arg.Accessor)
 		if err != nil {
@@ -69,28 +77,26 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 
 		fmt.Println("[VMDK_TYPE_INSPECTOR] Accessor: ", accessor)
 
-		for _, filename := range arg.Filenames {
-			file := filename
-			fd, err := accessor.OpenWithOSPath(file)
-			if err != nil {
-				fmt.Println("[VMDK_TYPE_INSPECTOR] Error opening file: ", err.Error())
-				return
-			}
-			defer fd.Close()
-
-			buffer := make([]byte, 512)
-			bytes_read, err := fd.Read(buffer)
-			if err != nil {
-				fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
-				return
-			}
-			if bytes_read < 512 {
-				fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
-				return
-			}
-			fmt.Println("[VMDK_TYPE_INSPECTOR] Buffer: ", buffer)
-			fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytes_read)
+		file := arg.Filename
+		fd, err := accessor.OpenWithOSPath(file)
+		if err != nil {
+			fmt.Println("[VMDK_TYPE_INSPECTOR] Error opening file: ", err.Error())
+			return
 		}
+		defer fd.Close()
+
+		buffer := make([]byte, 512)
+		bytes_read, err := fd.Read(buffer)
+		if err != nil {
+			fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
+			return
+		}
+		if bytes_read < 512 {
+			fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
+			return
+		}
+		fmt.Println("[VMDK_TYPE_INSPECTOR] Buffer: ", buffer)
+		fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytes_read)
 	}()
 	return output_chan
 }
