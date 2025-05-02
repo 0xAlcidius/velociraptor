@@ -17,9 +17,10 @@ import (
 type VmdkType string
 
 const (
-	SPARSE VmdkType = "sparse"
-	FLAT   VmdkType = "flat"
-	OTHER  VmdkType = "other"
+	SPARSE  VmdkType = "sparse"
+	FLAT    VmdkType = "flat"
+	vmfs    VmdkType = "vmfs"
+	unknown VmdkType = "unknown"
 )
 
 type VmdkTypeInspectorPluginArgs struct {
@@ -85,8 +86,8 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		}
 		defer fd.Close()
 
-		buffer := make([]byte, 512)
-		bytes_read, err := fd.Read(buffer)
+		contents := make([]byte, 512)
+		bytes_read, err := fd.Read(contents)
 		if err != nil {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
 			return
@@ -95,8 +96,16 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error: not enough bytes read")
 			return
 		}
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Buffer: ", string(buffer))
-		fmt.Println("[VMDK_TYPE_INSPECTOR] Bytes read: ", bytes_read)
+
+		fmt.Println("[VMDK_TYPE_INSPECTOR] 4 bytes: ", string(contents[:4]))
+		fmt.Println("[VMDK_TYPE_INSPECTOR] 20 bytes: ", string(contents[:20]))
+
+		if string(contents[:4]) == "KDMV" {
+			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely a Monolithic Sparse VMDK")
+		} else if string(contents[:20]) == "# Disk DescriptorFile" {
+			fmt.Println("[VMDK_TYPE_INSPECTOR] Likely NOT monolithic sparse VMDK")
+		}
+
 	}()
 	return output_chan
 }
