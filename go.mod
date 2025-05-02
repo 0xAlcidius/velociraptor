@@ -69,11 +69,11 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/xor-gate/ar v0.0.0-20170530204233-5c72ae81e2b7 // indirect
 	github.com/xor-gate/debpkg v1.0.0
-	go.starlark.net v0.0.0-20230925163745-10651d5192ab
+	go.starlark.net v0.0.0-20231101134539-556fd59b42f6
 	golang.org/x/crypto v0.36.0
 	golang.org/x/mod v0.21.0
-	golang.org/x/sys v0.32.0
 	golang.org/x/net v0.38.0
+	golang.org/x/sys v0.32.0
 	golang.org/x/text v0.24.0
 	golang.org/x/time v0.5.0
 	google.golang.org/api v0.169.0
@@ -294,7 +294,8 @@ require (
 // replace www.velocidex.com/golang/regparser => ../regparser
 // replace www.velocidex.com/golang/go-ntfs => ../go-ntfs
 // replace github.com/Velocidex/go-fat => ../go-fat
-// replace github.com/Velocidex/go-vmdk => ../go-vmdk
+replace github.com/Velocidex/go-vmdk => ../go-vmdk
+
 // replace www.velocidex.com/golang/go-pe => ../go-pe
 // replace www.velocidex.com/golang/evtx => ../evtx
 // replace www.velocidex.com/golang/go-ese => ../go-ese
