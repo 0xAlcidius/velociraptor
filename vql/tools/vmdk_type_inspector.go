@@ -82,7 +82,7 @@ func (self VmdkTypeInspectorPlugin) Call(ctx context.Context,
 		}
 		defer fd.Close()
 
-		contents := make([]byte, 512)
+		contents := make([]byte, 64)
 		bytes_read, err := fd.Read(contents)
 		if err != nil {
 			fmt.Println("[VMDK_TYPE_INSPECTOR] Error reading file: ", err.Error())
