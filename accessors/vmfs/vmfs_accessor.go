@@ -17,8 +17,9 @@ type VMFSFileSystemAccessor struct {
 }
 
 func (self VMFSFileSystemAccessor) New(scope vfilter.Scope) (accessors.FileSystemAccessor, error) {
-
-	return nil, nil
+	return &VMFSFileSystemAccessor{
+		scope: scope,
+	}, nil
 }
 
 func (self VMFSFileSystemAccessor) Lstat(filename string) (
@@ -47,7 +48,8 @@ func (self VMFSFileSystemAccessor) OpenWithOSPath(filename *accessors.OSPath) (
 
 func (self VMFSFileSystemAccessor) ParsePath(path string) (
 	*accessors.OSPath, error) {
-	return nil, nil
+
+	return accessors.NewLinuxOSPath(path)
 }
 
 func (self VMFSFileSystemAccessor) ReadDir(filename string) (
