@@ -25,5 +25,6 @@ import (
 	_ "www.velocidex.com/golang/velociraptor/accessors/vfs"
 	_ "www.velocidex.com/golang/velociraptor/accessors/vhdx"
 	_ "www.velocidex.com/golang/velociraptor/accessors/vmdk"
+	_ "www.velocidex.com/golang/velociraptor/accessors/vmfs"
 	_ "www.velocidex.com/golang/velociraptor/accessors/zip"
 )
