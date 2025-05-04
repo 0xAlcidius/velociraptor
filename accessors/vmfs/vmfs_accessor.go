@@ -65,5 +65,5 @@ func (self VMFSFileSystemAccessor) ReadDirWithOSPath(
 
 func init() {
 	accessors.Register("raw_vmfs", &VMFSFileSystemAccessor{},
-		`Access a remote system's filesystem via SSH/SFTP.`)
+		`Access a VMFS filesystem.`)
 }
