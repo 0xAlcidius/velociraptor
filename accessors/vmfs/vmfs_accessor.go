@@ -1,6 +1,8 @@
 package vmfs
 
 import (
+	"fmt"
+
 	"www.velocidex.com/golang/velociraptor/accessors"
 	"www.velocidex.com/golang/vfilter"
 )
@@ -48,8 +50,14 @@ func (self VMFSFileSystemAccessor) OpenWithOSPath(filename *accessors.OSPath) (
 
 func (self VMFSFileSystemAccessor) ParsePath(path string) (
 	*accessors.OSPath, error) {
+	osPath, err := accessors.NewLinuxOSPath(path)
+	if err != nil {
+		return nil, err
+	}
 
-	return accessors.NewLinuxOSPath(path)
+	fmt.Println("Parsed path:", osPath)
+
+	return osPath, nil
 }
 
 func (self VMFSFileSystemAccessor) ReadDir(filename string) (
