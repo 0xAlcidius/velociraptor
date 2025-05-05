@@ -57,11 +57,17 @@ func (self VMFSFileSystemAccessor) ParsePath(path string) (
 
 	fmt.Println("Parsed path:", osPath)
 
-	delegateAccessor := osPath.DelegateAccessor
-	delegatePath := osPath.DelegatePath
+	if osPath.DelegateAccessor != nil {
+		fmt.Println("DelegateAccessor():", osPath.DelegateAccessor())
+	} else {
+		fmt.Println("DelegateAccessor is nil!")
+	}
 
-	fmt.Println("Delegate accessor func: "+delegateAccessor()+", Delegate accessor: ", delegateAccessor)
-	fmt.Println("Delegate path func: "+delegatePath()+", Delegate path: ", delegatePath)
+	if osPath.DelegatePath != nil {
+		fmt.Println("DelegatePath():", osPath.DelegatePath())
+	} else {
+		fmt.Println("DelegatePath is nil!")
+	}
 
 	return osPath, nil
 }
