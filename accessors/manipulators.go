@@ -165,6 +165,30 @@ func NewLinuxOSPath(path string) (*OSPath, error) {
 	return result, err
 }
 
+// EsxiVMFSPathManipulator is used to parse paths like:
+// /vmfs/volumes/5c0f1a4b-2e3d-4b8e-9f7c-6a2d3f8e1a2f/
+
+type ESXiVMFSManipulator struct{ GenericPathManipulator }
+
+func (self ESXiVMFSManipulator) PathParse(path string, result *OSPath) error {
+	return LinuxPathManipulator{}.PathParse(path, result)
+}
+
+func NewESXiVMFSPath(path string) (*OSPath, error) {
+	fmt.Println("[ESXiVMFS Manipulator] NewESXiVMFSPath Path:", path)
+	manipulator := ESXiVMFSManipulator{}
+	result := &OSPath{
+		Manipulator: manipulator,
+	}
+
+	fmt.Println("[ESXiVMFS Manipulator] NewESXiVMFSPath Path:", path)
+
+	err := manipulator.PathParse(path, result)
+
+	fmt.Println("[ESXiVMFS Manipulator] NewESXiVMFSPath Path:", path)
+	return result, err
+}
+
 var (
 	// For convenience we transform paths like c:\Windows -> \\.\c:\Windows
 	driveRegex = regexp.MustCompile(
@@ -198,33 +222,49 @@ var (
 type WindowsPathManipulator struct{ GenericPathManipulator }
 
 func (self WindowsPathManipulator) PathParse(path string, result *OSPath) error {
+	fmt.Println("[Windows Manipulator] Running PathParse Path:", path)
 	osPathUnserializations.Inc()
 
 	err := maybeParsePathSpec(path, result)
+
+	fmt.Println("[Windows Manipulator] PathSpec:", result.pathspec)
 	if err != nil {
 		return err
 	}
 	path = result.pathspec.Path
 
+	fmt.Println("[Windows Manipulator] Path:", path)
+
 	m := deviceDriveRegex.FindStringSubmatch(path)
+
+	fmt.Println("[Windows Manipulator] deviceDriveRegex:", m)
 	if len(m) != 0 {
+
+		fmt.Println("[Windows Manipulator] Found deviceDriveRegex, result.Components before:", result.Components)
 		result.Components = append([]string{m[1]}, utils.SplitComponents(m[2])...)
+		fmt.Println("[Windows Manipulator] Found deviceDriveRegex, result.Components after:", result.Components)
 		return nil
 	}
 
+	fmt.Println("[Windows Manipulator] path:", path)
 	m = deviceDirectoryRegex.FindStringSubmatch(path)
+	fmt.Println("[Windows Manipulator] deviceDirectoryRegex:", m)
 	if len(m) != 0 {
 		result.Components = append([]string{m[1]}, utils.SplitComponents(m[2])...)
+		fmt.Println("[Windows Manipulator] Found deviceDirectoryRegex, result.Components:", result.Components)
 		return nil
 	}
 
 	m = uncRegex.FindStringSubmatch(path)
+	fmt.Println("[Windows Manipulator] uncRegex:", m)
 	if len(m) != 0 {
 		result.Components = append([]string{m[1]}, utils.SplitComponents(m[2])...)
+		fmt.Println("[Windows Manipulator] Found uncRegex, result.Components:", result.Components)
 		return nil
 	}
 
 	result.Components = utils.SplitComponents(path)
+	fmt.Println("[Windows Manipulator] result.Components:", result.Components)
 	return nil
 }
 

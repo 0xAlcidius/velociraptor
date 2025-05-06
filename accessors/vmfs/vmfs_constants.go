@@ -1,7 +1,8 @@
 package vmfs
 
 const (
-	FS3Offset         = 0x1300000
-	FS3DescriptorSize = 0x164
-	FS3Magic          = 0x2fabf15e
+	DescriptorOffset = 0x1300000
+	DescriptorSize   = 0x164
+	DescriptorMagic  = 0x2fabf15e
+	DirEntrySize     = 0x8c
 )
